@@ -3,6 +3,7 @@
   :url "http://example.com/FIXME"
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/data.json "0.2.6"]
-                 [uswitch/lambada "0.1.2"]]
+                 [uswitch/lambada "0.1.2"]
+                 [http-kit "2.3.0"]]
   :profiles {:uberjar {:aot :all}}
   :uberjar-name "origin-proxy.jar")
