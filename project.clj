@@ -4,6 +4,7 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/data.json "0.2.6"]
                  [uswitch/lambada "0.1.2"]
-                 [clj-http "3.9.1"]]
+                 [clj-http "3.9.1"]
+                 [environ "1.1.0"]]
   :profiles {:uberjar {:aot :all}}
   :uberjar-name "origin-proxy.jar")
