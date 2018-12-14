@@ -7,6 +7,18 @@
             [clj-http.client :as http]
             [environ.core :refer [env]]))
 
+(def unwanted-request-headers ["Host"
+                               "X-Amzn-Trace-Id"
+                               "X-Forwarded-For"
+                               "X-Forwarded-Port"
+                               "X-Forwarded-Proto"])
+
+(defn filter-request-headers [headers]
+  (apply dissoc headers unwanted-request-headers))
+
+(defn filter-response-headers [headers]
+  (apply hash-map (flatten (filter (fn [[k v]] (not (coll? v))) headers))))
+
 (defn url-decode [encoded-url]
   (java.net.URLDecoder/decode encoded-url))
 
@@ -16,7 +28,7 @@
 (defn get-request-config [event]
   (let [headers (get event "headers") body (get event "body")]
     {:throw-exceptions false
-     :headers headers
+     :headers (filter-request-headers headers)
      :body (if (= (get headers "Content-Type") "application/json")
              (json/write-str body)
              (str body))}))
@@ -27,15 +39,13 @@
    :headers {"content-type" "application/json"}
    :isBase64Encoded false})
 
-(defn filter-headers [headers]
-  (apply hash-map (flatten (filter (fn [[k v]] (not (coll? v))) headers))))
-
 (defn handle-response [response]
   (assoc
     (rename-keys
       (select-keys response [:body :status])
       {:status :statusCode})
-    :isBase64Encoded false :headers (filter-headers (response :headers))))
+    :isBase64Encoded false
+    :headers (filter-response-headers (response :headers))))
 
 (defn make-request [url event]
   (let [request-config (get-request-config event)]
