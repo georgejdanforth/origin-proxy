@@ -22,7 +22,7 @@
                      headers))))
 
 (defn url-decode [encoded-url]
-  (java.net.URLDecoder/decode encoded-url))
+  (if encoded-url (java.net.URLDecoder/decode encoded-url) nil))
 
 (defn get-url [event]
   (url-decode (get-in event ["queryStringParameters" "url"])))
@@ -63,10 +63,11 @@
       (some some? (map #(re-find % url) allowed-hosts)))))
 
 (defn handle [event]
-  (let [url (get-url event)]
+  (if-let [url (get-url event)]
     (if (is-valid-host url)
       (make-request url event)
-      (error-response 403 "Invalid host."))))
+      (error-response 403 "Invalid host."))
+    (error-response 403 "No host supplied.")))
 
 (deflambdafn origin-proxy.core.OriginProxy
   [in out context]
