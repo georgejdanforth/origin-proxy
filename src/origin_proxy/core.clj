@@ -7,17 +7,19 @@
             [clj-http.client :as http]
             [environ.core :refer [env]]))
 
-(def unwanted-request-headers ["Host"
-                               "X-Amzn-Trace-Id"
-                               "X-Forwarded-For"
-                               "X-Forwarded-Port"
-                               "X-Forwarded-Proto"])
+(defn get-env-list [variable]
+  (if-let [value (env variable)] (split value #",") '()))
 
 (defn filter-request-headers [headers]
-  (apply dissoc headers unwanted-request-headers))
+  (apply dissoc headers (get-env-list :unwanted-request-headers)))
 
 (defn filter-response-headers [headers]
-  (apply hash-map (flatten (filter (fn [[k v]] (not (coll? v))) headers))))
+  (let [unwanted-response-headers (get-env-list :unwanted-response-headers)]
+    (into {} (filter (fn [[k v]]
+                       (not (or
+                              (some #(= % v) unwanted-response-headers)
+                              (coll? v))))
+                     headers))))
 
 (defn url-decode [encoded-url]
   (java.net.URLDecoder/decode encoded-url))
@@ -55,12 +57,10 @@
       (error-response 405 "Method not allowed."))))
 
 (defn is-valid-host [url]
-  (let [allowed-hosts (env :allowed-hosts)]
-    (if (not-empty allowed-hosts)
-      (some
-        identity
-        (map #(re-matches % url) (map re-pattern (split allowed-hosts #","))))
-      true)))
+  (let [allowed-hosts (map re-pattern (get-env-list :allowed-hosts))]
+    (if (empty? allowed-hosts)
+      true
+      (some some? (map #(re-find % url) allowed-hosts)))))
 
 (defn handle [event]
   (let [url (get-url event)]
