@@ -45,7 +45,10 @@
       (select-keys response [:body :status])
       {:status :statusCode})
     :isBase64Encoded false
-    :headers (filter-response-headers (response :headers))))
+    :headers
+    (assoc
+      (filter-response-headers (response :headers))
+      "Access-Control-Allow-Origin" "*")))
 
 (defn make-request [url event]
   (let [request-config (get-request-config event)]
