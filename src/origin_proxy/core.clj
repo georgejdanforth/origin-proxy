@@ -14,12 +14,10 @@
   (apply dissoc headers (get-env-list :unwanted-request-headers)))
 
 (defn filter-response-headers [headers]
-  (let [unwanted-response-headers (get-env-list :unwanted-response-headers)]
-    (into {} (filter (fn [[k v]]
-                       (not (or
-                              (some #(= % v) unwanted-response-headers)
-                              (coll? v))))
-                     headers))))
+  (apply
+    dissoc
+    (into {} (filter (fn [[k v]] (not (coll? v))) headers))
+    (get-env-list :unwanted-response-headers)))
 
 (defn url-decode [encoded-url]
   (if encoded-url (java.net.URLDecoder/decode encoded-url) nil))
